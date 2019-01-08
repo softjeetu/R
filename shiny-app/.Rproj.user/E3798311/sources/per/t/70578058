@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1546942652236.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3301634322",
+    "id" : "70578058",
+    "lastKnownWriteTime" : 1546942702,
+    "last_content_update" : 1546942702687,
+    "path" : "~/R/project/shiny-app/app.R",
+    "project_path" : "app.R",
+    "properties" : {
+        "cursorPosition" : "10,26",
+        "notebook_format" : "html_document",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

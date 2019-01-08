@@ -1,0 +1,12 @@
+name: upsell
+title: upsell
+username:
+account: imart
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 631216
+bundleId: 1802637
+url: https://imart.shinyapps.io/upsell/
+when: 1546945695.28054
+asMultiple: FALSE
+asStatic: FALSE

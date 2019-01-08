@@ -1,0 +1,13 @@
+name: churn
+title: churn
+username:
+account: imart
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 631218
+bundleId: 1802636
+url: https://imart.shinyapps.io/churn/
+when: 1546945582.24702
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app (copy).R
