@@ -14,17 +14,18 @@ library(dplyr)
 library(data.table)
 library(DT)
 
-# Churn Customers
-upsell <- fread('data/final_upsell.csv', select = c("GLUSR_USR_ID","MDC_TYPE","Upsl_status", "Zone"))
+# Upsell
+upsell <- fread('data/final_upsell.csv', select = c("GLUSR_USR_ID","MDC_TYPE","TOT_BLS_PURCHASED_3", "TTL_CALLS_3", "Queries_CNT_3","Upsl_status", "Zone"), showProgress=TRUE)
 
-# Define UI for app that draws a histogram ----
+# Define UI for app ----
 ui <- fluidPage(
+  
   # Navbar panel
   navbarPage("IM Upsell App",
              tabPanel("Upsell")
   ),
-  # app title ----
   
+  # app title ----
   titlePanel("IM Upsell App"),
   
   # Sidebar layout with intpu & output definitions ----
@@ -33,14 +34,13 @@ ui <- fluidPage(
     # Sidebar panel for inputs ----
     sidebarPanel(
       
-      # Input: Text for providing a caption ----
-      # Note: Changes made to the caption in the textInput control
-      # are updated in the output area immediately as you type
+      # Input: Text for providing a type ----
+      # Note: Changes made to the type in the radioInput control
       radioButtons("type", "Choose Type:",
                    c("Zone" = "zone","Cust Id" = "gluserid"), 'zone', TRUE
       ),
       
-      # Input: Selector for choosing dataset ----
+      # Input: Selector for choosing customer ----
       conditionalPanel(
         condition = "input.type == 'gluserid'",
         selectInput(inputId = "customer",
@@ -48,7 +48,7 @@ ui <- fluidPage(
                     choices = unique(upsell[['GLUSR_USR_ID']]))
       ),
       
-      # Input: Selector for choosing dataset ----
+      # Input: Selector for choosing zone ----
       conditionalPanel(
         condition = "input.type == 'zone'",
         selectInput(inputId = "zone",
@@ -56,18 +56,8 @@ ui <- fluidPage(
                     choices = unique(upsell[['Zone']]))
       ),
       
-      # Input: Selector for number of rows to view ----
-      
-      # conditionalPanel(
-      #   condition = "input.type == 'zone'",
-      #   selectInput(inputId = "rows",
-      #                label = "Row:",
-      #                choices = c("All" = "-1", "10" = "10", "25" = "25", "50" = "50", "100" = "100"), '10')
-      # ),
-      
       # Button: to search ----
       actionButton("search", "Show", class = "btn-primary")
-      #submitButton("Show", icon("refresh"))
     ),
     
     
@@ -79,10 +69,10 @@ ui <- fluidPage(
       h3(textOutput("caption", container = span)),
       
       # Output: Verbatim text for data summary ----
-      # verbatimTextOutput("summary"),
+      verbatimTextOutput("summary"),
       
       # Output: HTML table with requested number of observations ----
-      tableOutput("results")
+      dataTableOutput("results")
       
     )
   )
@@ -94,7 +84,7 @@ server <- function(input, output) {
   observeEvent(input$search, {
     
     # Return the requested dataset ----
-    # By declaring datasetInput as a reactive expression we ensure
+    # By declaring dataset as a reactive expression we ensure
     # that:
     #
     # 1. It is only called when the inputs it depends on changes
@@ -120,10 +110,6 @@ server <- function(input, output) {
         return(NULL)
       }
       
-      # if (is.null(input$rows)) {
-      #   return(NULL)
-      # }
-      
       # filetering data
       filtered <- reactive({
         
@@ -138,17 +124,13 @@ server <- function(input, output) {
     
     # Create caption ----
     # The output$caption is computed based on a reactive expression
-    # that returns input$caption. When the user changes the
-    # "caption" field:
     #
     # 1. This function is automatically called to recompute the output
     # 2. New caption is pushed back to the browser for re-display
     #
     # Note that because the data-oriented reactive expressions
-    # below don't depend on input$caption, those expressions are
-    # NOT called when input$caption changes
     output$caption <- renderText({
-      input$caption
+      "Summary & Filtered Result(s)"
     })
     
     # Generate a summary of the dataset ----
@@ -156,28 +138,35 @@ server <- function(input, output) {
     # expression, so will be re-executed whenever datasetInput is
     # invalidated, i.e. whenever the input$dataset changes
     
-    #output$summary <- renderPrint({
-    #dataset <- datasetInput()
-    #summary(dataset)
-    #})
+    output$summary <- renderPrint({
+      if(is.null(filtered())){
+        return(NULL)
+      }
+      dataset <- filtered()
+      summary(dataset)
+    })
     
     # Show the first "n" observations ----
     # The output$view depends on both the databaseInput reactive
     # expression and input$obs, so it will be re-executed whenever
     # input$dataset or input$obs is changed
     
-    output$results <- renderTable({
-      filtered()
-    })
-    
-    # output$results <- DT::renderDataTable({
-    #   data <- filtered()
-    #   DT::datatable(
-    #     data,
-    #     rownames = FALSE,
-    #     options = list(searching = FALSE, lengthChange = FALSE)
-    #   )
+    # output$results <- renderTable({
+    #   filtered()
     # })
+    
+    output$results <- DT::renderDataTable({
+      data <- filtered()
+      DT::datatable(
+        data,
+        rownames = FALSE,
+        colnames = c('Customer Id', 'Mode', 'BLs purchased ( Lst 3 M)', 'Total Calls (Lst 3 M)','Total Queries (Lst 3 M)',"Upsell Status", "Zone"),
+        extensions = 'Buttons',
+        options = list(dom = '<"text-center"<"btn-group"B>><"clear"><"row"<"col-md-6"l><"col-md-6 text-right"f>r>t<"row"<"col-md-6"i><"col-md-6"p>><"clear">',
+                       buttons = c('excel', 'pdf', 'print')
+        )
+      )
+    })
     
   })
 }

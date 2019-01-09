@@ -1,3 +1,12 @@
+#
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    http://shiny.rstudio.com/
+#
+
 # if (!require("shiny")) install.packages("shiny")
 # if (!require("DT")) install.packages('DT')
 library(shiny)
@@ -6,16 +15,17 @@ library(data.table)
 library(DT)
 
 # Churn Customers
-churn_customers <- fread('data/final_churn.csv', select = c("gluserid","Mode","isdownloaded","company_name","state","total_enq","Total_enq_reply", "Zone"))
+churn_customers <- fread('data/final_churn.csv', select = c("gluserid","company_name","Mode","mapped_mcats","total_bl_pur","last_3m_bl_pur", "isdownloaded", "state", "Zone"))
 
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
+  
   # Navbar panel
   navbarPage("IM Customer Churn App",
              tabPanel("Customer Churn")
   ),
-  # app title ----
   
+  # app title ----
   titlePanel("IM Customer Churn App"),
   
   # Sidebar layout with intpu & output definitions ----
@@ -24,14 +34,13 @@ ui <- fluidPage(
     # Sidebar panel for inputs ----
     sidebarPanel(
       
-      # Input: Text for providing a caption ----
-      # Note: Changes made to the caption in the textInput control
-      # are updated in the output area immediately as you type
+      # Input: Text for providing a type ----
+      # Note: Changes made to the caption in the radioInput control
       radioButtons("type", "Choose Type:",
                    c("Zone" = "zone","Cust Id" = "gluserid"), 'zone', TRUE
       ),
       
-      # Input: Selector for choosing dataset ----
+      # Input: Selector for choosing customer ----
       conditionalPanel(
         condition = "input.type == 'gluserid'",
         selectInput(inputId = "customer",
@@ -39,22 +48,13 @@ ui <- fluidPage(
                     choices = unique(churn_customers[['gluserid']]))
       ),
       
-      # Input: Selector for choosing dataset ----
+      # Input: Selector for choosing zone ----
       conditionalPanel(
         condition = "input.type == 'zone'",
         selectInput(inputId = "zone",
                   label = "Choose Zone:",
                   choices = unique(churn_customers[['Zone']]))
       ),
-      
-      # Input: Selector for number of rows to view ----
-      
-      # conditionalPanel(
-      #   condition = "input.type == 'zone'",
-      #   selectInput(inputId = "rows",
-      #                label = "Row:",
-      #                choices = c("All" = "-1", "10" = "10", "25" = "25", "50" = "50", "100" = "100"), '10')
-      # ),
       
       # Button: to search ----
       actionButton("search", "Show", class = "btn-primary")
@@ -69,11 +69,11 @@ ui <- fluidPage(
       # Output: Formatted text for caption ----
       h3(textOutput("caption", container = span)),
       
-      # Output: Verbatim text for data summary ----
-      # verbatimTextOutput("summary"),
+      #Output: Verbatim text for data summary ----
+      verbatimTextOutput("summary"),
       
       # Output: HTML table with requested number of observations ----
-      tableOutput("results")
+      dataTableOutput("results")
       
     )
   )
@@ -85,7 +85,7 @@ server <- function(input, output) {
   observeEvent(input$search, {
     
     # Return the requested dataset ----
-    # By declaring datasetInput as a reactive expression we ensure
+    # By declaring dataset as a reactive expression we ensure
     # that:
     #
     # 1. It is only called when the inputs it depends on changes
@@ -111,10 +111,6 @@ server <- function(input, output) {
         return(NULL)
       }
       
-      # if (is.null(input$rows)) {
-      #   return(NULL)
-      # }
-      
       # filetering data
       filtered <- reactive({
         
@@ -129,17 +125,13 @@ server <- function(input, output) {
     
     # Create caption ----
     # The output$caption is computed based on a reactive expression
-    # that returns input$caption. When the user changes the
-    # "caption" field:
     #
     # 1. This function is automatically called to recompute the output
     # 2. New caption is pushed back to the browser for re-display
     #
     # Note that because the data-oriented reactive expressions
-    # below don't depend on input$caption, those expressions are
-    # NOT called when input$caption changes
     output$caption <- renderText({
-      input$caption
+      "Summary & Filtered Result(s)"
     })
     
     # Generate a summary of the dataset ----
@@ -147,28 +139,33 @@ server <- function(input, output) {
     # expression, so will be re-executed whenever datasetInput is
     # invalidated, i.e. whenever the input$dataset changes
     
-    #output$summary <- renderPrint({
-      #dataset <- datasetInput()
-      #summary(dataset)
-    #})
+    output$summary <- renderPrint({
+      dataset <- filtered()
+      summary(dataset)
+    })
     
     # Show the first "n" observations ----
     # The output$view depends on both the databaseInput reactive
     # expression and input$obs, so it will be re-executed whenever
     # input$dataset or input$obs is changed
     
-    output$results <- renderTable({
-      filtered()
-    })
-    
-    # output$results <- DT::renderDataTable({
-    #   data <- filtered()
-    #   DT::datatable(
-    #     data,
-    #     rownames = FALSE,
-    #     options = list(searching = FALSE, lengthChange = FALSE)
-    #   )
+    # output$results <- renderTable({
+    #   filtered()
     # })
+    
+    output$results <- DT::renderDataTable({
+      data <- filtered()
+      DT::datatable(
+        data,
+        rownames = FALSE,
+        colnames = c('Customer Id', 'Company Name', 'Mode', 'MCAT count', 'BLs purchased', 'BLs purchased ( Lst 3 M)','isdownloaded',"State", "Zone"),
+        extensions = 'Buttons',
+        options = list(columnDefs = list(list(visible=FALSE, targets=c(6))), 
+                       dom = '<"text-center"<"btn-group"B>><"clear"><"row"<"col-md-6"l><"col-md-6 text-right"f>r>t<"row"<"col-md-6"i><"col-md-6"p>><"clear">',
+                       buttons = c('excel', 'pdf', 'print')
+                  )
+      )
+    })
     
   })
 }
