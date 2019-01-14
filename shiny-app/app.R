@@ -12,6 +12,7 @@
 library(shiny)
 library(dplyr)
 library(data.table)
+library(shinycssloaders)
 library(DT)
 
 # Churn Customers
@@ -21,12 +22,12 @@ churn_customers <- fread('data/final_churn.csv', select = c("gluserid","company_
 ui <- fluidPage(
   
   # Navbar panel
-  navbarPage("IM Customer Churn App",
+  navbarPage("INDIAMART Customer Churn App",
              tabPanel("Customer Churn")
   ),
   
   # app title ----
-  titlePanel("IM Customer Churn App"),
+  titlePanel("INDIAMART Customer Churn App"),
   
   # Sidebar layout with intpu & output definitions ----
   sidebarLayout(
@@ -73,8 +74,12 @@ ui <- fluidPage(
       verbatimTextOutput("summary"),
       
       # Output: HTML table with requested number of observations ----
-      dataTableOutput("results")
+      #dataTableOutput("results")
       
+      conditionalPanel(
+        condition = "input.search",
+        withSpinner(dataTableOutput("results"),type=1)
+      )
     )
   )
 )
@@ -100,8 +105,8 @@ server <- function(input, output) {
       filtered <- reactive({
         
         churn_customers %>%
-          filter(isdownloaded == 1,
-                 gluserid == input$customer
+          filter(gluserid == input$customer
+                 #,isdownloaded == 1
           )
       })
     }
@@ -140,8 +145,14 @@ server <- function(input, output) {
     # invalidated, i.e. whenever the input$dataset changes
     
     output$summary <- renderPrint({
+      if(is.null(filtered())){
+        return(NULL)
+      }
+      
       dataset <- filtered()
-      summary(dataset)
+      summary_cols <- c("mapped_mcats", "total_bl_pur", "last_3m_bl_pur")
+      summary_data <- dataset[summary_cols]
+      summary(summary_data)
     })
     
     # Show the first "n" observations ----
@@ -154,17 +165,18 @@ server <- function(input, output) {
     # })
     
     output$results <- DT::renderDataTable({
-      data <- filtered()
-      DT::datatable(
-        data,
-        rownames = FALSE,
-        colnames = c('Customer Id', 'Company Name', 'Mode', 'MCAT count', 'BLs purchased', 'BLs purchased ( Lst 3 M)','isdownloaded',"State", "Zone"),
-        extensions = 'Buttons',
-        options = list(columnDefs = list(list(visible=FALSE, targets=c(6))), 
-                       dom = '<"text-center"<"btn-group"B>><"clear"><"row"<"col-md-6"l><"col-md-6 text-right"f>r>t<"row"<"col-md-6"i><"col-md-6"p>><"clear">',
-                       buttons = c('excel', 'pdf', 'print')
-                  )
-      )
+        Sys.sleep(1)
+        data <- filtered()
+        DT::datatable(
+          data,
+          rownames = FALSE,
+          colnames = c('Customer Id', 'Company Name', 'Mode', 'MCAT count', 'BLs purchased', 'BLs purchased ( Lst 3 M)','Downloaded',"State", "Zone"),
+          extensions = 'Buttons',
+          options = list(#columnDefs = list(list(visible=FALSE, targets=c(6))), 
+                         dom = '<"text-center"<"btn-group"B>><"clear"><"row"<"col-md-6"l><"col-md-6 text-right"f>r>t<"row"<"col-md-6"i><"col-md-6"p>><"clear">',
+                         buttons = c('excel', 'pdf', 'print')
+                    )
+        )
     })
     
   })

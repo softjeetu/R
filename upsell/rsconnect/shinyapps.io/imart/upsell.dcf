@@ -5,8 +5,8 @@ account: imart
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 631216
-bundleId: 1804296
+bundleId: 1812742
 url: https://imart.shinyapps.io/upsell/
-when: 1547019456.44407
+when: 1547450028.74374
 asMultiple: FALSE
 asStatic: FALSE

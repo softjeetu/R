@@ -5,16 +5,16 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "3301634322",
+    "hash" : "1069566625",
     "id" : "70578058",
-    "lastKnownWriteTime" : 1546942702,
-    "last_content_update" : 1546942702687,
+    "lastKnownWriteTime" : 1547445700,
+    "last_content_update" : 1547445700670,
     "path" : "~/R/project/shiny-app/app.R",
     "project_path" : "app.R",
     "properties" : {
-        "cursorPosition" : "10,26",
+        "cursorPosition" : "84,2",
         "notebook_format" : "html_document",
-        "scrollLine" : "0"
+        "scrollLine" : "79"
     },
     "relative_order" : 1,
     "source_on_save" : false,

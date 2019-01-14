@@ -12,6 +12,7 @@
 library(shiny)
 library(dplyr)
 library(data.table)
+library(shinycssloaders)
 library(DT)
 
 # Upsell
@@ -21,12 +22,12 @@ upsell <- fread('data/final_upsell.csv', select = c("GLUSR_USR_ID","MDC_TYPE","T
 ui <- fluidPage(
   
   # Navbar panel
-  navbarPage("IM Upsell App",
+  navbarPage("INDIAMART Upsell App",
              tabPanel("Upsell")
   ),
   
   # app title ----
-  titlePanel("IM Upsell App"),
+  titlePanel("INDIAMART Upsell App"),
   
   # Sidebar layout with intpu & output definitions ----
   sidebarLayout(
@@ -72,7 +73,11 @@ ui <- fluidPage(
       verbatimTextOutput("summary"),
       
       # Output: HTML table with requested number of observations ----
-      dataTableOutput("results")
+      #dataTableOutput("results")
+      conditionalPanel(
+        condition = "input.search",
+        withSpinner(dataTableOutput("results"),type=1)
+      )
       
     )
   )
@@ -99,7 +104,7 @@ server <- function(input, output) {
       filtered <- reactive({
         
         upsell %>%
-          filter(Upsl_status == 1,
+          filter(#Upsl_status == 1,
                  GLUSR_USR_ID == input$customer
           )
       })
@@ -142,8 +147,12 @@ server <- function(input, output) {
       if(is.null(filtered())){
         return(NULL)
       }
+      
       dataset <- filtered()
-      summary(dataset)
+      summary_cols <- c("TOT_BLS_PURCHASED_3", "TTL_CALLS_3", "Queries_CNT_3")
+      summary_data <- dataset[summary_cols]
+      summary(summary_data)
+      
     })
     
     # Show the first "n" observations ----
@@ -156,6 +165,7 @@ server <- function(input, output) {
     # })
     
     output$results <- DT::renderDataTable({
+      Sys.sleep(1)
       data <- filtered()
       DT::datatable(
         data,
